@@ -349,8 +349,7 @@ class FilmApp:
             command=lambda value, s=star_label: update_stars(value, s)
         )
         slider.pack(side="left")
-
-
+    
 
     def choose_film(self):
         film = self.selected_film.get()
