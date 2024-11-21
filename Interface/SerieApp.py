@@ -171,25 +171,84 @@ class SerieApp:
             command=self.create_main_menu
         ).pack()
 
+    # def search_serie(self):
+    #     # Effacer les anciens résultats
+    #     for widget in self.display_frame.winfo_children():
+    #         widget.destroy()
+
+    #     # ### Exemple de données codées en dur pour tester ###
+    #     #results = [
+    #     #    {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png"},
+    #     #    {"title": "Friends", "image_path": "img/friends.png"},
+    #     #    {"title": "Breaking Bad", "image_path": "img/breakingbad.png"}
+    #     #]
+
+    #     # ### Code réel pour récupérer les résultats dynamiquement ###
+    #     motscles = self.search_entry.get().strip().lower()
+    #     results_series = self.find_best_series(motscles) 
+
+    #     # Si aucun résultat trouvé
+    #     if not results_series:
+    #         tk.Label(
+    #             self.display_frame,
+    #             text="Aucun résultat trouvé.",
+    #             font=("Tahoma", 14),
+    #             fg="white",
+    #             bg="#141414"
+    #         ).pack()
+    #         return
+
+    #     # Hiérarchie des tailles pour le top 3
+    #     sizes = [(200, 300), (150, 225), (100, 150)]  # Taille des images (largeur, hauteur)
+    #     fonts = [("Tahoma", 14, "bold"), ("Tahoma", 12), ("Tahoma", 10)]  # Tailles des polices
+
+    #     # Afficher chaque résultat avec la hiérarchie visuelle
+    #     for i, result in enumerate(results_series):
+    #         # Créer un sous-frame pour chaque série
+    #         image_frame = tk.Frame(self.display_frame, bg="#141414")
+    #         image_frame.pack(side="left", padx=20)
+
+    #         # Charger et afficher l'image
+    #         image_label = tk.Label(image_frame, bg="#141414")
+    #         try:
+    #             if os.path.exists(result["image_path"]):
+    #                 img = Image.open(result["image_path"])
+    #                 img = img.resize(sizes[i])  # Ajuster la taille selon le classement
+    #                 photo = ImageTk.PhotoImage(img)
+    #                 image_label.config(image=photo)
+    #                 image_label.image = photo
+    #             else:
+    #                 image_label.config(text="Image introuvable", fg="red")
+    #         except Exception as e:
+    #             image_label.config(text="Erreur lors du chargement", fg="red")
+    #             print(f"Erreur : {e}")
+
+    #         image_label.pack()
+
+    #         # Afficher le titre sous l'image
+    #         title_label = tk.Label(
+    #             image_frame,
+    #             text=result["title"],
+    #             font=fonts[i],
+    #             fg="white",
+    #             bg="#141414",
+    #             anchor="center"
+    #         )
+    #         title_label.pack(pady=10)
+    
+    
+    #################### A TESTER ###################################
     def search_serie(self):
         # Effacer les anciens résultats
         for widget in self.display_frame.winfo_children():
             widget.destroy()
 
-        # ### Exemple de données codées en dur pour tester ###
-        results = [
-            {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png"},
-            {"title": "Friends", "image_path": "img/friends.png"},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png"}
-        ]
-
-        # ### Code réel pour récupérer les résultats dynamiquement ###
-        # keyword = self.search_entry.get().strip().lower()
-        # results = self.fetch_series_by_keyword(keyword)  # Méthode à implémenter
-        # results = results[:3]  # Garder seulement les 3 premiers résultats
+        # Récupérer les mots-clés depuis l'entrée utilisateur
+        motscles = self.search_entry.get().strip().lower()
+        results_series = self.find_best_series(motscles)  # Fonction pour chercher les séries similaires
 
         # Si aucun résultat trouvé
-        if not results:
+        if not results_series:
             tk.Label(
                 self.display_frame,
                 text="Aucun résultat trouvé.",
@@ -204,16 +263,31 @@ class SerieApp:
         fonts = [("Tahoma", 14, "bold"), ("Tahoma", 12), ("Tahoma", 10)]  # Tailles des polices
 
         # Afficher chaque résultat avec la hiérarchie visuelle
-        for i, result in enumerate(results):
+        for i, result in enumerate(results_series):
             # Créer un sous-frame pour chaque série
             image_frame = tk.Frame(self.display_frame, bg="#141414")
             image_frame.pack(side="left", padx=20)
 
+            # Afficher le titre de la série
+            title_label = tk.Label(
+                image_frame,
+                text=result["title"],
+                font=fonts[i],
+                fg="white",
+                bg="#141414",
+                anchor="center"
+            )
+            title_label.pack(pady=10)
+
+            # Récupérer le titre du label pour construire le chemin de l'image
+            serie_title = title_label.cget("text")  # Récupère le texte du label
+            image_path = f"img/{serie_title.replace(' ', '').lower()}.png"  # Exemple : "Friends" -> "img/friends.png"
+
             # Charger et afficher l'image
             image_label = tk.Label(image_frame, bg="#141414")
             try:
-                if os.path.exists(result["image_path"]):
-                    img = Image.open(result["image_path"])
+                if os.path.exists(image_path):
+                    img = Image.open(image_path)
                     img = img.resize(sizes[i])  # Ajuster la taille selon le classement
                     photo = ImageTk.PhotoImage(img)
                     image_label.config(image=photo)
@@ -225,17 +299,7 @@ class SerieApp:
                 print(f"Erreur : {e}")
 
             image_label.pack()
-
-            # Afficher le titre sous l'image
-            title_label = tk.Label(
-                image_frame,
-                text=result["title"],
-                font=fonts[i],
-                fg="white",
-                bg="#141414",
-                anchor="center"
-            )
-            title_label.pack(pady=10)
+        ##############################################################################################################
 
 
     def create_list_screen(self):
