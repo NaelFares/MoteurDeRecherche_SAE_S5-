@@ -9,7 +9,7 @@ import os
 class SerieApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("WebFlix")
+        self.root.title("PyFlix")
         
         # Dimensions de la fenêtre
         width, height = 500, 300  # Ajuste les dimensions comme tu veux
@@ -118,7 +118,7 @@ class SerieApp:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
         # Ajouter les widgets du menu principal
-        tk.Label(self.root, text="WebFlix", font=("Tahoma", 20, "bold"), fg="white", bg="#141414").pack(pady=20)
+        tk.Label(self.root, text="PyFlix", font=("Tahoma", 20, "bold"), fg="white", bg="#141414").pack(pady=20)
 
         tk.Button(self.root, text="Rechercher une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(pady=10)
         tk.Button(self.root, text="Voir la liste ou noter une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(pady=10)
