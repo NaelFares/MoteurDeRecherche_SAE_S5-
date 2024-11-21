@@ -6,7 +6,6 @@ import os
 from BD.requete import find_best_series
 
 
-
 class FilmApp:
     def __init__(self, root):
         self.root = root
@@ -238,6 +237,7 @@ class FilmApp:
             )
             title_label.pack(pady=10)
 
+
     def create_list_screen(self):
         self.clear_screen()
         self.root.configure(bg="#141414")
@@ -276,6 +276,55 @@ class FilmApp:
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
         ]
 
+        def update_rating(film, new_rating, star_label):
+            """Met à jour la note et les étoiles affichées."""
+            film["rating"] = new_rating
+            stars = "★" * new_rating + "☆" * (5 - new_rating)
+            star_label.config(text=stars)
+
+        def open_rating_window(film, star_label):
+            """Ouvre une fenêtre pour noter un film."""
+            rating_window = tk.Toplevel(self.root)
+            rating_window.title(f"Noter {film['title']}")
+            rating_window.configure(bg="#141414")
+            rating_window.geometry("300x200")
+
+            tk.Label(
+                rating_window,
+                text=f"Attribuer une note à {film['title']}",
+                font=("Tahoma", 14),
+                fg="white",
+                bg="#141414"
+            ).pack(pady=10)
+
+            # Curseur pour attribuer une note
+            note_var = tk.IntVar(value=film["rating"])
+            slider = tk.Scale(
+                rating_window,
+                from_=0,
+                to=5,
+                orient="horizontal",
+                bg="#141414",
+                fg="white",
+                highlightbackground="#141414",
+                variable=note_var
+            )
+            slider.pack(pady=20)
+
+            tk.Button(
+                rating_window,
+                text="Valider",
+                font=("Tahoma", 12),
+                fg="white",
+                bg="#e21219",
+                command=lambda: save_rating(film, note_var.get(), star_label, rating_window)
+            ).pack(pady=10)
+
+        def save_rating(film, new_rating, star_label, rating_window):
+            """Enregistre la note et ferme la fenêtre."""
+            update_rating(film, new_rating, star_label)
+            rating_window.destroy()
+
         # Afficher les films
         for film in self.films:
             film_frame = tk.Frame(films_frame, bg="#141414", bd=1, relief="solid")
@@ -297,7 +346,7 @@ class FilmApp:
                 print(f"Erreur : {e}")
             img_label.pack(side="left", padx=10, pady=5)
 
-            # Titre et note
+            # Titre, étoiles et bouton noter
             details_frame = tk.Frame(film_frame, bg="#141414")
             details_frame.pack(side="left", padx=10, pady=5, fill="x")
 
@@ -311,48 +360,27 @@ class FilmApp:
                 anchor="w"
             ).pack(anchor="w")
 
-            # Curseur de notation
-            slider_frame = tk.Frame(details_frame, bg="#141414")
-            slider_frame.pack(anchor="w", pady=5)
-
-            tk.Label(
-                slider_frame,
-                text="Note :",
+            # Étoiles pour la note
+            stars = "★" * film["rating"] + "☆" * (5 - film["rating"])
+            star_label = tk.Label(
+                details_frame,
+                text=stars,
                 font=("Tahoma", 12),
-                fg="white",
+                fg="yellow",
                 bg="#141414",
                 anchor="w"
-            ).pack(side="left")
+            )
+            star_label.pack(anchor="w", pady=5)
 
-            note_var = tk.IntVar(value=film["rating"])  # Variable pour la note
-
-        def update_stars(value, star_label):
-            """Met à jour les étoiles selon la valeur du curseur."""
-            stars = "★" * int(value) + "☆" * (5 - int(value))
-            star_label.config(text=stars)
-
-        star_label = tk.Label(
-            slider_frame,
-            text="★" * film["rating"] + "☆" * (5 - film["rating"]),
-            font=("Tahoma", 12),
-            fg="yellow",
-            bg="#141414"
-        )
-        star_label.pack(side="left", padx=10)
-
-        slider = tk.Scale(
-            slider_frame,
-            from_=0,
-            to=5,
-            orient="horizontal",
-            bg="#141414",
-            fg="white",
-            highlightbackground="#141414",
-            variable=note_var,
-            command=lambda value, s=star_label: update_stars(value, s)
-        )
-        slider.pack(side="left")
-    
+            # Bouton pour noter
+            tk.Button(
+                film_frame,
+                text="Noter",
+                font=("Tahoma", 12),
+                fg="white",
+                bg="#e21219",
+                command=lambda f=film, s=star_label: open_rating_window(f, s)
+            ).pack(side="right", padx=10, pady=5)
 
     def choose_film(self):
         film = self.selected_film.get()
