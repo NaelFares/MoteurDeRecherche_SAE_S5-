@@ -2,6 +2,9 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
+#Import des fonctions de connexion et de requêtage de la bd 
+from BD.requete import find_best_series
+
 
 
 class FilmApp:
