@@ -3,13 +3,13 @@ from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
 #Import des fonctions de connexion et de requêtage de la bd 
-from BD.requete import find_best_series
+#from BD.requete import find_best_series
 
 
-class FilmApp:
+class SerieApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("Gestion de Films")
+        self.root.title("WebFlix")
         
         # Dimensions de la fenêtre
         width, height = 500, 300  # Ajuste les dimensions comme tu veux
@@ -118,10 +118,10 @@ class FilmApp:
         self.root.geometry(f"{width}x{height}+{x}+{y}")
 
         # Ajouter les widgets du menu principal
-        tk.Label(self.root, text="Nom de l'application", font=("Tahoma", 20, "bold"), fg="white", bg="#141414").pack(pady=20)
+        tk.Label(self.root, text="WebFlix", font=("Tahoma", 20, "bold"), fg="white", bg="#141414").pack(pady=20)
 
-        tk.Button(self.root, text="Rechercher un film", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(pady=10)
-        tk.Button(self.root, text="Voir la liste ou noter un film", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(pady=10)
+        tk.Button(self.root, text="Rechercher une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(pady=10)
+        tk.Button(self.root, text="Voir la liste ou noter une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(pady=10)
         tk.Button(self.root, text="Deconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(pady=10)
 
     def create_search_screen(self):
@@ -136,7 +136,7 @@ class FilmApp:
 
         tk.Label(
             search_frame,
-            text="Rechercher un film :",
+            text="Rechercher une série :",
             font=("Tahoma", 14, "bold"),
             fg="white",
             bg="#141414"
@@ -151,7 +151,7 @@ class FilmApp:
             font=("Tahoma", 14),
             fg="white",
             bg="#e21219",
-            command=self.search_film
+            command=self.search_serie
         ).pack(side="left", padx=10)
 
         # Frame pour afficher les images et les titres
@@ -171,7 +171,7 @@ class FilmApp:
             command=self.create_main_menu
         ).pack()
 
-    def search_film(self):
+    def search_serie(self):
         # Effacer les anciens résultats
         for widget in self.display_frame.winfo_children():
             widget.destroy()
@@ -249,7 +249,7 @@ class FilmApp:
         # Titre
         tk.Label(
             title_frame,
-            text="Liste des films",
+            text="Liste des séries",
             font=("Tahoma", 22, "bold"),
             fg="white",
             bg="#141414"
@@ -265,40 +265,40 @@ class FilmApp:
             command=self.create_main_menu
         ).pack(side="right", padx=20)
 
-        # Frame pour la liste des films
-        films_frame = tk.Frame(self.root, bg="#141414")
-        films_frame.pack(pady=20, fill="x")
+        # Frame pour la liste des series
+        series_frame = tk.Frame(self.root, bg="#141414")
+        series_frame.pack(pady=20, fill="x")
 
-        # Simule une liste de films
-        self.films = [
+        # Simule une liste de series
+        self.series = [
             {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
             {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
         ]
 
-        def update_rating(film, new_rating, star_label):
+        def update_rating(serie, new_rating, star_label):
             """Met à jour la note et les étoiles affichées."""
-            film["rating"] = new_rating
+            serie["rating"] = new_rating
             stars = "★" * new_rating + "☆" * (5 - new_rating)
             star_label.config(text=stars)
 
-        def open_rating_window(film, star_label):
-            """Ouvre une fenêtre pour noter un film."""
+        def open_rating_window(serie, star_label):
+            """Ouvre une fenêtre pour noter un serie."""
             rating_window = tk.Toplevel(self.root)
-            rating_window.title(f"Noter {film['title']}")
+            rating_window.title(f"Noter {serie['title']}")
             rating_window.configure(bg="#141414")
             rating_window.geometry("300x200")
 
             tk.Label(
                 rating_window,
-                text=f"Attribuer une note à {film['title']}",
+                text=f"Attribuer une note à {serie['title']}",
                 font=("Tahoma", 14),
                 fg="white",
                 bg="#141414"
             ).pack(pady=10)
 
             # Curseur pour attribuer une note
-            note_var = tk.IntVar(value=film["rating"])
+            note_var = tk.IntVar(value=serie["rating"])
             slider = tk.Scale(
                 rating_window,
                 from_=0,
@@ -317,24 +317,24 @@ class FilmApp:
                 font=("Tahoma", 12),
                 fg="white",
                 bg="#e21219",
-                command=lambda: save_rating(film, note_var.get(), star_label, rating_window)
+                command=lambda: save_rating(serie, note_var.get(), star_label, rating_window)
             ).pack(pady=10)
 
-        def save_rating(film, new_rating, star_label, rating_window):
+        def save_rating(serie, new_rating, star_label, rating_window):
             """Enregistre la note et ferme la fenêtre."""
-            update_rating(film, new_rating, star_label)
+            update_rating(serie, new_rating, star_label)
             rating_window.destroy()
 
-        # Afficher les films
-        for film in self.films:
-            film_frame = tk.Frame(films_frame, bg="#141414", bd=1, relief="solid")
-            film_frame.pack(fill="x", pady=5)
+        # Afficher les serie
+        for serie in self.series:
+            serie_frame = tk.Frame(series_frame, bg="#141414", bd=1, relief="solid")
+            serie_frame.pack(fill="x", pady=5)
 
             # Charger et afficher l'image
-            img_label = tk.Label(film_frame, bg="#141414")
+            img_label = tk.Label(serie_frame, bg="#141414")
             try:
-                if os.path.exists(film["image_path"]):
-                    img = Image.open(film["image_path"])
+                if os.path.exists(serie["image_path"]):
+                    img = Image.open(serie["image_path"])
                     img = img.resize((50, 75))  # Taille réduite
                     photo = ImageTk.PhotoImage(img)
                     img_label.config(image=photo)
@@ -347,13 +347,13 @@ class FilmApp:
             img_label.pack(side="left", padx=10, pady=5)
 
             # Titre, étoiles et bouton noter
-            details_frame = tk.Frame(film_frame, bg="#141414")
+            details_frame = tk.Frame(serie_frame, bg="#141414")
             details_frame.pack(side="left", padx=10, pady=5, fill="x")
 
-            # Titre du film
+            # Titre du serie
             tk.Label(
                 details_frame,
-                text=film["title"],
+                text=serie["title"],
                 font=("Tahoma", 14),
                 fg="white",
                 bg="#141414",
@@ -361,7 +361,7 @@ class FilmApp:
             ).pack(anchor="w")
 
             # Étoiles pour la note
-            stars = "★" * film["rating"] + "☆" * (5 - film["rating"])
+            stars = "★" * serie["rating"] + "☆" * (5 - serie["rating"])
             star_label = tk.Label(
                 details_frame,
                 text=stars,
@@ -374,20 +374,20 @@ class FilmApp:
 
             # Bouton pour noter
             tk.Button(
-                film_frame,
+                serie_frame,
                 text="Noter",
                 font=("Tahoma", 12),
                 fg="white",
                 bg="#e21219",
-                command=lambda f=film, s=star_label: open_rating_window(f, s)
+                command=lambda f=serie, s=star_label: open_rating_window(f, s)
             ).pack(side="right", padx=10, pady=5)
 
-    def choose_film(self):
-        film = self.selected_film.get()
-        if film:
-            self.create_film_screen(film)
+    def choose_serie(self):
+        serie = self.selected_serie.get()
+        if serie:
+            self.create_serie_screen(serie)
         else:
-            messagebox.showerror("Erreur", "Veuillez sélectionner un film.")
+            messagebox.showerror("Erreur", "Veuillez sélectionner une série.")
 
     def clear_screen(self):
         for widget in self.root.winfo_children():
@@ -396,5 +396,5 @@ class FilmApp:
 
 if __name__ == "__main__":
     root = tk.Tk()
-    app = FilmApp(root)
+    app = SerieApp(root)
     root.mainloop()
