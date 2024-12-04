@@ -120,9 +120,64 @@ class SerieApp:
         # Ajouter les widgets du menu principal
         tk.Label(self.root, text="PyFlix", font=("Tahoma", 20, "bold"), fg="white", bg="#141414").pack(pady=20)
 
-        tk.Button(self.root, text="Rechercher une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(pady=10)
-        tk.Button(self.root, text="Voir la liste ou noter une série", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(pady=10)
-        tk.Button(self.root, text="Deconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(pady=10)
+        # Frame pour les boutons "Noter", "Rechercher", "Déconnexion"
+        button_frame = tk.Frame(self.root, bg="#141414")
+        button_frame.pack(pady=10)
+
+        # Bouton "Noter"
+        tk.Button(button_frame, text="Noter", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(side="left", padx=10)
+
+        # Bouton "Rechercher"
+        tk.Button(button_frame, text="Rechercher", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(side="left", padx=10)
+
+        # Bouton "Déconnexion"
+        tk.Button(button_frame, text="Déconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(side="left", padx=10)
+
+        # Frame pour les séries recommandées (zone sous les boutons)
+        recommendations_frame = tk.Frame(self.root, bg="#141414")
+        recommendations_frame.pack(pady=20, fill="x")
+
+        # Simuler l'affichage des séries recommandées
+        tk.Label(
+            recommendations_frame,
+            text="Séries recommandées :",
+            font=("Tahoma", 18, "bold"),
+            fg="white",
+            bg="#141414"
+        ).pack(pady=10)
+
+        # Exemple d'affichage de séries
+        self.series = [
+            {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
+            {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+        ]
+
+        # Affichage des séries recommandées (exemple avec des titres)
+        for serie in self.series:
+            serie_frame = tk.Frame(recommendations_frame, bg="#141414")
+            serie_frame.pack(pady=10, fill="x", anchor="center")  # Centrer le frame sur l'écran
+
+            # Affichage de l'image (si l'image existe)
+            try:
+                img = Image.open(serie["image_path"])
+                img = img.resize((100, 150))  # Ajustez la taille de l'image
+                photo = ImageTk.PhotoImage(img)
+                img_label = tk.Label(serie_frame, image=photo, bg="#141414")
+                img_label.image = photo  # Garder la référence de l'image
+                img_label.pack(side="top", padx=10)
+
+                # Titre de la série centré sous l'image
+                tk.Label(
+                    serie_frame,
+                    text=serie["title"],
+                    font=("Tahoma", 14),
+                    fg="white",
+                    bg="#141414"
+                ).pack(side="top", pady=10)
+            except Exception as e:
+                print(f"Erreur lors du chargement de l'image: {e}")
+
 
     def create_search_screen(self):
         self.clear_screen()
@@ -328,6 +383,41 @@ class SerieApp:
             bg="#e21219",
             command=self.create_main_menu
         ).pack(side="right", padx=20)
+        
+        # Ajout de la barre de recherche sous le titre
+        search_frame = tk.Frame(self.root, bg="#141414")
+        search_frame.pack(pady=10, fill="x")
+        
+        search_label = tk.Label(
+            search_frame,
+            text="Rechercher une série :",
+            font=("Tahoma", 12),
+            fg="white",
+            bg="#141414"
+        )
+        search_label.pack(side="left", padx=10)
+
+        # Champ de texte pour la recherche
+        search_entry = tk.Entry(
+            search_frame,
+            font=("Tahoma", 12),
+            fg="black",
+            bg="white",
+            width=40
+        )
+        search_entry.pack(side="left", padx=10)
+
+        # Bouton de recherche
+        search_button = tk.Button(
+        search_frame,
+        text="Rechercher",
+        font=("Tahoma", 12),
+        fg="white",
+        bg="#e21219",
+        #command= mettre la fonctione liée
+        )
+        search_button.pack(side="left", padx=10)  # Placement à gauche de la frame, juste après l'Entry
+
 
         # Frame pour la liste des series
         series_frame = tk.Frame(self.root, bg="#141414")
@@ -339,6 +429,39 @@ class SerieApp:
             {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
         ]
+        
+    #     # Fonction pour filtrer les séries en fonction de la recherche
+    # def search_series():
+    #     search_term = search_entry.get().lower()  # Récupère le texte de la barre de recherche
+    #     filtered_series = [
+    #         serie for serie in self.series
+    #         if search_term in serie["title"].lower()
+    #     ]
+    #     # Met à jour l'affichage avec les séries filtrées
+    #     self.update_series_list(filtered_series)
+
+    #     # Bouton de recherche
+    #     search_button = tk.Button(
+    #         search_frame,
+    #         text="Rechercher",
+    #         font=("Tahoma", 12),
+    #         fg="white",
+    #         bg="#e21219",
+    #         command=search_series
+    #     )
+    #     search_button.pack(side="right", padx=10)
+
+    #     # Frame pour la liste des séries
+    #     series_frame = tk.Frame(self.root, bg="#141414")
+    #     series_frame.pack(pady=20, fill="x")
+
+    #     # Simule une liste de séries
+    #     self.series = [
+    #         {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
+    #         {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
+    #         {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+    #     ]
+
 
         def update_rating(serie, new_rating, star_label):
             """Met à jour la note et les étoiles affichées."""
