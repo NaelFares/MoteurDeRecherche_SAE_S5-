@@ -2,9 +2,8 @@ import tkinter as tk
 from tkinter import messagebox
 from PIL import Image, ImageTk
 import os
-#Import des fonctions de connexion et de requêtage de la bd 
-#from BD.requete import find_best_series
-
+#Import des fonctions de requêtage de la bd 
+from BD import requete
 
 class SerieApp:
     def __init__(self, root):
@@ -300,7 +299,12 @@ class SerieApp:
 
         # Récupérer les mots-clés depuis l'entrée utilisateur
         motscles = self.search_entry.get().strip().lower()
-        results_series = self.find_best_series(motscles)  # Fonction pour chercher les séries similaires
+        
+        # Utiliser la fonction find_best_series importée de requete.py
+        results_db = requete.find_best_series(motscles)
+        
+        # Transformer les résultats de la BD en ne gardant que les titres
+        results_series = [{"title": titre} for titre, _ in results_db]
 
         # Si aucun résultat trouvé
         if not results_series:

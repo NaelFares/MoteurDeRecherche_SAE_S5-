@@ -1,23 +1,35 @@
 import psycopg2
-from psycopg2 import sql
+from psycopg2 import pool, sql
 
-def connect_to_db(db_config):
-    """
-    Établit une connexion à la base de données PostgreSQL.
+# Configuration centralisée de la base de données
+DB_CONFIG = {
+    "dbname": "Serie_SAE_S5",
+    "user": "postgres",
+    "password": "$iutinfo",
+    "host": "127.0.0.1",
+    "port": "5432"
+}
+class DatabasePool:
+    _instance = None
     
-    :param db_config: Dictionnaire contenant les informations de connexion à la base de données.
-    :return: Connexion et curseur à la base de données.
-    """
-    try:
-        conn = psycopg2.connect(
-            dbname=db_config["dbname"],
-            user=db_config["user"],
-            password=db_config["password"],
-            host=db_config["host"],
-            port=db_config["port"]
+    @staticmethod
+    def get_instance():
+        if DatabasePool._instance is None:
+            DatabasePool._instance = DatabasePool()
+        return DatabasePool._instance
+    
+    def __init__(self):
+        self.pool = pool.SimpleConnectionPool(
+            1,  # minimum de connexions
+            5,  # maximum de connexions
+            **DB_CONFIG  # Utilisation de la configuration globale
         )
-        cursor = conn.cursor()
-        return conn, cursor
-    except Exception as e:
-        print("Erreur de connexion à la base de données :", e)
-        raise
+    
+    def get_connection(self):
+        return self.pool.getconn()
+    
+    def release_connection(self, conn):
+        self.pool.putconn(conn)
+        
+    def close(self):
+        self.pool.closeall()
