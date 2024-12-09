@@ -123,3 +123,48 @@ def find_recommendations_from_favorites(id_utilisateur, limit_series=5):
             cursor.close()
         if conn:
             db_pool.release_connection(conn)
+            
+def filter_series(user_input):
+    """
+    Trouve la série en fonction de l'entrée dans la barre de recherche dans la fenetre "Noter"
+    
+    :return: Liste des séries les plus probables.
+    """
+    # Vérifie l'entrée utilisateur
+    if not user_input.strip():
+        print("Erreur : L'entrée utilisateur est vide ou invalide.")
+        return []
+
+    # Obtient l'instance du pool
+    db_pool = DatabasePool.get_instance()
+    conn = None
+
+    try:
+        conn = db_pool.get_connection()
+        cursor = conn.cursor()
+        
+        # Normalisation de l'entrée utilisateur : minuscules et suppression des espaces
+        normalized_input = f"%{user_input.lower().replace(' ', '')}%"
+        
+        query = sql.SQL("""
+            SELECT s.titre
+            FROM Serie s 
+            WHERE LOWER(REPLACE(s.titre, ' ', '')) ILIKE %s
+            LIMIT 3;
+        """)
+        
+        cursor.execute(query, (normalized_input,))
+        results = cursor.fetchall()
+        conn.commit()
+        
+        return results
+
+    except Exception as e:
+        print("Erreur lors de l'exécution de la requête :", e)
+        return []
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            db_pool.release_connection(conn)
