@@ -132,11 +132,10 @@ class SerieApp:
         # Bouton "Déconnexion"
         tk.Button(button_frame, text="Déconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(side="left", padx=10)
 
-        # Frame pour les séries recommandées (zone sous les boutons)
+        # Frame pour les séries recommandées
         recommendations_frame = tk.Frame(self.root, bg="#141414")
-        recommendations_frame.pack(pady=20, fill="x")
+        recommendations_frame.pack(pady=20, fill="both", expand=True)
 
-        # Simuler l'affichage des séries recommandées
         tk.Label(
             recommendations_frame,
             text="Séries recommandées :",
@@ -145,28 +144,43 @@ class SerieApp:
             bg="#141414"
         ).pack(pady=10)
 
-        # Exemple d'affichage de séries
-        self.series = [
-            {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
-            {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-        ]
+        # Canvas avec scrollbar
+        canvas = tk.Canvas(recommendations_frame, bg="#141414", highlightthickness=0)
+        canvas.pack(side="left", fill="both", expand=True)
+        
+        scrollbar = tk.Scrollbar(recommendations_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Affichage des séries recommandées (exemple avec des titres)
-        for serie in self.series:
-            serie_frame = tk.Frame(recommendations_frame, bg="#141414")
-            serie_frame.pack(pady=10, fill="x", anchor="center")  # Centrer le frame sur l'écran
+        # Frame contenant toutes les séries
+        series_container = tk.Frame(canvas, bg="#141414")
+        canvas.create_window((0, 0), window=series_container, anchor="nw", width=canvas.winfo_width())
 
-            # Affichage de l'image (si l'image existe)
+        # Ajuster la largeur quand le canvas change de taille
+        def on_canvas_configure(event):
+            canvas.itemconfig(1, width=event.width)
+        canvas.bind('<Configure>', on_canvas_configure)
+
+        # Configuration des colonnes pour qu'elles aient la même largeur
+        for i in range(3):
+            series_container.grid_columnconfigure(i, weight=1)
+
+        # Affichage des séries en grille 3 colonnes
+        for i, serie in enumerate(self.series):
             try:
+                # Créer un frame pour chaque série
+                serie_frame = tk.Frame(series_container, bg="#141414")
+                serie_frame.grid(row=i//3, column=i%3, padx=10, pady=10, sticky="nsew")
+
+                # Image
                 img = Image.open(serie["image_path"])
-                img = img.resize((100, 150))  # Ajustez la taille de l'image
+                img = img.resize((100, 150))
                 photo = ImageTk.PhotoImage(img)
                 img_label = tk.Label(serie_frame, image=photo, bg="#141414")
-                img_label.image = photo  # Garder la référence de l'image
-                img_label.pack(side="top", padx=10)
+                img_label.image = photo
+                img_label.pack(side="top")
 
-                # Titre de la série centré sous l'image
+                # Titre
                 tk.Label(
                     serie_frame,
                     text=serie["title"],
@@ -177,6 +191,10 @@ class SerieApp:
             except Exception as e:
                 print(f"Erreur lors du chargement de l'image: {e}")
 
+        # Mettre à jour la zone de défilement
+        def configure_scroll_region(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        series_container.bind('<Configure>', configure_scroll_region)
 
     def create_search_screen(self):
         self.clear_screen()
