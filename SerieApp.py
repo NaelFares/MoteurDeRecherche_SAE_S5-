@@ -450,6 +450,12 @@ class SerieApp:
             {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
             {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
+            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
         ]
         
     #     # Fonction pour filtrer les séries en fonction de la recherche
@@ -534,11 +540,37 @@ class SerieApp:
             update_rating(serie, new_rating, star_label)
             rating_window.destroy()
 
-        # Afficher les serie
+        # Créer un frame conteneur pour le canvas et la scrollbar
+        container_frame = tk.Frame(self.root, bg="#141414")
+        container_frame.pack(pady=20, fill="both", expand=True)
+
+        # Créer le canvas avec scrollbar
+        canvas = tk.Canvas(container_frame, bg="#141414", highlightthickness=0)
+        canvas.pack(side="left", fill="both", expand=True)
+
+        scrollbar = tk.Scrollbar(container_frame, orient="vertical", command=canvas.yview)
+        scrollbar.pack(side="right", fill="y")
+        canvas.configure(yscrollcommand=scrollbar.set)
+
+        # Frame pour contenir toutes les séries
+        series_frame = tk.Frame(canvas, bg="#141414")
+        canvas_window = canvas.create_window((0, 0), window=series_frame, anchor="nw", width=canvas.winfo_width())
+
+        # Ajuster la largeur du frame quand le canvas change de taille
+        def on_canvas_configure(event):
+            canvas.itemconfig(canvas_window, width=event.width)
+        canvas.bind('<Configure>', on_canvas_configure)
+
+        # Mettre à jour la région de scroll
+        def update_scroll_region(event):
+            canvas.configure(scrollregion=canvas.bbox("all"))
+        series_frame.bind('<Configure>', update_scroll_region)
+
+        # Le reste du code pour afficher les séries, mais dans series_frame au lieu de directement dans root
         for serie in self.series:
             serie_frame = tk.Frame(series_frame, bg="#141414", bd=1, relief="solid")
-            serie_frame.pack(fill="x", pady=5)
-
+            serie_frame.pack(fill="x", pady=5, padx=5)
+            
             # Charger et afficher l'image
             img_label = tk.Label(serie_frame, bg="#141414")
             try:
