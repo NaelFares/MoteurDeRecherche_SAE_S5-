@@ -74,6 +74,14 @@ class SerieApp:
 
         # Bouton "Se connecter", centré sous le formulaire
         tk.Button(form_frame, text="Se connecter", bg="#e21219", font=("Tahoma", 13, "bold"), fg=self.text_color, command=self.check_login).grid(row=3, column=0, columnspan=2, pady=20)
+        
+        # Bouton "Créer un compte" en bas à gauche de la fenêtre principale
+        tk.Button(self.root, 
+                text="Créer un compte", 
+                bg="#313131",  # Couleur grise
+                font=("Tahoma", 10),  # Police plus petite
+                fg=self.text_color, 
+                command=self.create_account_screen).place(relx=0.02, rely=0.88)  # Position ajustée
 
     def check_login(self):
         # Remplacez par une vraie vérification
@@ -633,6 +641,78 @@ class SerieApp:
     def clear_screen(self):
         for widget in self.root.winfo_children():
             widget.destroy()
+
+    def create_account_screen(self):
+        self.clear_screen()
+        
+        # Dimensions de la fenêtre
+        width, height = 500, 300
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Calcul pour centrer la fenêtre
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+
+        # Définir la géométrie
+        self.root.geometry(f"{width}x{height}+{x}+{y}")
+
+        # Créer un Canvas pour dessiner un rectangle en fond
+        canvas = tk.Canvas(self.root, width=400, height=400, bg="#141414", bd=0, highlightthickness=0)
+        canvas.pack(expand=True)
+
+        # Dessiner un rectangle dans le Canvas
+        canvas.create_rectangle(60, 50, 350, 250, outline="#f4f4f4", width=2)
+
+        # Créer un conteneur (Frame) pour le formulaire
+        form_frame = tk.Frame(self.root, bg="#141414")
+        canvas.create_window(205, 150, window=form_frame)
+
+        # Titre centré
+        tk.Label(form_frame, text="Créer un compte", font=("Tahoma", 24, "bold"), fg="white", bg="#141414").grid(row=0, column=0, columnspan=2, pady=20)
+
+        # Champ Login
+        tk.Label(form_frame, text="Login:", font=self.font_normal, bg="#141414", fg=self.text_color).grid(row=1, column=0, padx=10, pady=10, sticky="e")
+        self.new_login_entry = tk.Entry(form_frame, bg="#313131", fg=self.text_color)
+        self.new_login_entry.grid(row=1, column=1, padx=10, pady=10, sticky="w")
+
+        # Champ Password
+        tk.Label(form_frame, text="Password:", font=self.font_normal, bg="#141414", fg=self.text_color).grid(row=2, column=0, padx=10, pady=10, sticky="e")
+        self.new_password_entry = tk.Entry(form_frame, show="*", bg="#313131", fg=self.text_color)
+        self.new_password_entry.grid(row=2, column=1, padx=10, pady=10, sticky="w")
+
+        # Bouton de création de compte
+        tk.Button(form_frame, 
+                text="Créer mon compte", 
+                bg="#e21219", 
+                font=("Tahoma", 13, "bold"), 
+                fg=self.text_color, 
+                command=self.validate_account_creation).grid(row=3, column=0, columnspan=2, pady=20)
+
+        # Bouton retour
+        tk.Button(self.root, 
+                text="Retour", 
+                bg="#313131", 
+                font=("Tahoma", 10), 
+                fg=self.text_color, 
+                command=self.create_login_screen).place(relx=0.02, rely=0.88)
+
+    def validate_account_creation(self):
+        # Récupérer les valeurs des champs
+        login = self.new_login_entry.get()
+        password = self.new_password_entry.get()
+
+        # Vérifier que les champs ne sont pas vides
+        if not login or not password:
+            messagebox.showerror("Erreur", "Veuillez remplir tous les champs.")
+            return
+
+        # Ici, vous pouvez ajouter la logique pour sauvegarder le compte dans la base de données
+        # Pour l'instant, on affiche juste un message de succès
+        messagebox.showinfo("Succès", "Compte créé avec succès!")
+        
+        # Redirection vers la page de connexion
+        self.create_login_screen()
 
 
 if __name__ == "__main__":
