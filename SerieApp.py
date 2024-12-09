@@ -344,8 +344,9 @@ class SerieApp:
             return
 
         # Hiérarchie des tailles pour le top 3
-        sizes = [(200, 300), (150, 225), (100, 150)]  # Taille des images (largeur, hauteur)
+        sizes = [(200, 300), (150, 225), (100, 150)]  # Taille des images
         fonts = [("Tahoma", 14, "bold"), ("Tahoma", 12), ("Tahoma", 10)]  # Tailles des polices
+        button_sizes = [("Tahoma", 12, "bold"), ("Tahoma", 10), ("Tahoma", 8)]  # Tailles pour les boutons
 
         # Afficher chaque résultat avec la hiérarchie visuelle
         for i, result in enumerate(results_series):
@@ -384,6 +385,18 @@ class SerieApp:
                 print(f"Erreur : {e}")
 
             image_label.pack()
+
+            # Ajouter le bouton Noter sous l'image
+            noter_button = tk.Button(
+                image_frame,
+                text="Noter",
+                font=button_sizes[i],
+                fg="white",
+                bg="#e21219",
+                width=10,  # Largeur fixe pour tous les boutons
+                command=lambda serie=result: self.open_rating_window(serie)  # Utiliser la fonction existante
+            )
+            noter_button.pack(pady=5)  # Petit espacement au-dessus et en-dessous du bouton
         ##############################################################################################################
 
 
