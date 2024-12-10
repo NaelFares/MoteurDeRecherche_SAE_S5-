@@ -7,30 +7,43 @@ from BD import requete
 
 class SerieApp:
     def __init__(self, root):
+        # === FENÊTRE PRINCIPALE ===
         self.root = root
         self.root.title("PyFlix")
         
-        # Dimensions de la fenêtre
-        width, height = 500, 300  # Ajuste les dimensions comme tu veux
+        # === GESTION UTILISATEUR ===
+        self.current_user_id = None
+        
+        # === STYLES ET THÈMES ===
+        self.text_color = "#f4f4f4"  # Blanc
+        self.font_title = ("Tahoma", 16, "bold")
+        self.font_normal = ("Tahoma", 12)
+        
+        # === CHAMPS DE SAISIE ===
+        # Login/Inscription
+        self.login_entry = None
+        self.password_entry = None
+        self.new_login_entry = None
+        self.new_password_entry = None
+        # Recherche
+        self.search_entry = None
+        
+        # === FRAMES DYNAMIQUES ===
+        self.display_frame = None
+        
+        # === CONFIGURATION FENÊTRE ===
+        # Thème
+        self.root.configure(bg="#141414")
+        
+        # Dimensions et positionnement
+        width, height = 500, 300
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-
-        # Calcul pour centrer la fenêtre
         x = (screen_width - width) // 2
         y = (screen_height - height) // 2
-
-        # Définir la géométrie
         self.root.geometry(f"{width}x{height}+{x}+{y}")
-        
-        # Configuration globale
-        self.root.configure(bg="#141414")  # Couleur de fond de la fenêtre
-        # Configuration globale
-        self.root.configure(bg="#141414")  # Couleur de fond de la fenêtre
-        self.text_color = "#f4f4f4"  # Couleur des textes (blanc)
-        self.font_title = ("Tahoma", 16, "bold")  # Police pour les titres
-        self.font_normal = ("Tahoma", 12)  # Police standard
 
-        # Initialisation des écrans
+        # === INITIALISATION ===
         self.create_login_screen()
 
     def create_login_screen(self):
@@ -84,12 +97,26 @@ class SerieApp:
                 command=self.create_account_screen).place(relx=0.02, rely=0.88)  # Position ajustée
 
     def check_login(self):
-        # Remplacez par une vraie vérification
-        if self.login_entry.get() and self.password_entry.get():
+        # Récupérer les valeurs des champs
+        login = self.login_entry.get()
+        password = self.password_entry.get()
+
+        # Vérifier que les champs ne sont pas vides
+        if not login or not password:
+            messagebox.showerror("Erreur", "Veuillez remplir les champs Login et Password.")
+            return
+
+        # Vérifier les identifiants avec la fonction verify_user
+        success, user_id = requete.verify_user(login, password)
+        
+        if success:
+            # Stocker l'ID de l'utilisateur pour une utilisation ultérieure
+            self.current_user_id = user_id
+            # Redirection vers le menu principal
             self.create_main_menu()
         else:
-            messagebox.showerror("Erreur", "Veuillez remplir les champs Login et Password.")
-            
+            messagebox.showerror("Erreur", "Login ou mot de passe incorrect.")
+
     def logout(self):
         """Réinitialise l'application et ramène l'utilisateur à la page de connexion."""
         self.create_login_screen()
@@ -131,13 +158,9 @@ class SerieApp:
         button_frame = tk.Frame(self.root, bg="#141414")
         button_frame.pack(pady=10)
 
-        # Bouton "Noter"
+        # Boutons de navigation
         tk.Button(button_frame, text="Noter", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(side="left", padx=10)
-
-        # Bouton "Rechercher"
         tk.Button(button_frame, text="Rechercher", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(side="left", padx=10)
-
-        # Bouton "Déconnexion"
         tk.Button(button_frame, text="Déconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(side="left", padx=10)
 
         # Frame pour les séries recommandées
@@ -152,7 +175,21 @@ class SerieApp:
             bg="#141414"
         ).pack(pady=10)
 
-        # Canvas avec scrollbar
+        # Obtenir les recommandations depuis la base de données
+        recommended_series = requete.find_recommendations_from_favorites(self.current_user_id)
+
+        if not recommended_series:
+            # Afficher un message si aucune recommandation n'est disponible
+            tk.Label(
+                recommendations_frame,
+                text="Notez des séries pour obtenir des recommandations personnalisées !",
+                font=("Tahoma", 12),
+                fg="white",
+                bg="#141414"
+            ).pack(pady=20)
+            return
+
+        # Canvas avec scrollbar pour les recommandations
         canvas = tk.Canvas(recommendations_frame, bg="#141414", highlightthickness=0)
         canvas.pack(side="left", fill="both", expand=True)
         
@@ -160,44 +197,57 @@ class SerieApp:
         scrollbar.pack(side="right", fill="y")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Frame contenant toutes les séries
+        # Configuration du défilement avec la molette
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
+        # Frame pour contenir les séries recommandées
         series_container = tk.Frame(canvas, bg="#141414")
         canvas.create_window((0, 0), window=series_container, anchor="nw", width=canvas.winfo_width())
 
-        # Ajuster la largeur quand le canvas change de taille
-        def on_canvas_configure(event):
-            canvas.itemconfig(1, width=event.width)
-        canvas.bind('<Configure>', on_canvas_configure)
-
-        # Configuration des colonnes pour qu'elles aient la même largeur
+        # Configuration des colonnes
         for i in range(3):
             series_container.grid_columnconfigure(i, weight=1)
 
-        # Affichage des séries en grille 3 colonnes
-        for i, serie in enumerate(self.series):
+        # Affichage des séries recommandées
+        for i, (title, score) in enumerate(recommended_series):
             try:
                 # Créer un frame pour chaque série
                 serie_frame = tk.Frame(series_container, bg="#141414")
                 serie_frame.grid(row=i//3, column=i%3, padx=10, pady=10, sticky="nsew")
 
+                # Construire le chemin de l'image
+                image_path = f"img/{title.replace(' ', '').lower()}.png"
+
                 # Image
-                img = Image.open(serie["image_path"])
-                img = img.resize((100, 150))
-                photo = ImageTk.PhotoImage(img)
-                img_label = tk.Label(serie_frame, image=photo, bg="#141414")
-                img_label.image = photo
-                img_label.pack(side="top")
+                if os.path.exists(image_path):
+                    img = Image.open(image_path)
+                    img = img.resize((100, 150))
+                    photo = ImageTk.PhotoImage(img)
+                    img_label = tk.Label(serie_frame, image=photo, bg="#141414")
+                    img_label.image = photo
+                    img_label.pack(side="top")
+                else:
+                    # Label de remplacement si l'image n'existe pas
+                    tk.Label(
+                        serie_frame,
+                        text="Image non disponible",
+                        fg="white",
+                        bg="#141414"
+                    ).pack(side="top")
 
                 # Titre
                 tk.Label(
                     serie_frame,
-                    text=serie["title"],
+                    text=title,
                     font=("Tahoma", 14),
                     fg="white",
                     bg="#141414"
                 ).pack(side="top", pady=10)
+
             except Exception as e:
-                print(f"Erreur lors du chargement de l'image: {e}")
+                print(f"Erreur lors du chargement de la série {title}: {e}")
 
         # Mettre à jour la zone de défilement
         def configure_scroll_region(event):
@@ -573,6 +623,11 @@ class SerieApp:
         scrollbar.pack(side="right", fill="y")
         canvas.configure(yscrollcommand=scrollbar.set)
 
+        # Ajouter ces lignes pour le défilement avec la molette/pavé tactile
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+
         # Frame pour contenir toutes les séries
         series_frame = tk.Frame(canvas, bg="#141414")
         canvas_window = canvas.create_window((0, 0), window=series_frame, anchor="nw", width=canvas.winfo_width())
@@ -652,6 +707,7 @@ class SerieApp:
             messagebox.showerror("Erreur", "Veuillez sélectionner une série.")
 
     def clear_screen(self):
+        self.root.unbind_all("<MouseWheel>")  # Débinder l'événement de scroll
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -720,12 +776,15 @@ class SerieApp:
             messagebox.showerror("Erreur", "Veuillez remplir tous les champs.")
             return
 
-        # Ici, vous pouvez ajouter la logique pour sauvegarder le compte dans la base de données
-        # Pour l'instant, on affiche juste un message de succès
-        messagebox.showinfo("Succès", "Compte créé avec succès!")
+        # Utiliser la fonction create_user de requete.py
+        success = requete.create_user(login, password)
         
-        # Redirection vers la page de connexion
-        self.create_login_screen()
+        if success:
+            messagebox.showinfo("Succès", "Compte créé avec succès!")
+            # Redirection vers la page de connexion
+            self.create_login_screen()
+        else:
+            messagebox.showerror("Erreur", "La création du compte a échoué. Veuillez réessayer.")
 
 
 if __name__ == "__main__":

@@ -168,3 +168,82 @@ def filter_series(user_input):
             cursor.close()
         if conn:
             db_pool.release_connection(conn)
+            
+            
+            
+def create_user(login, mdp):
+    """
+    Crée un nouvel utilisateur dans la base de données.
+    
+    :param login: Login de l'utilisateur
+    :param mdp: Mot de passe de l'utilisateur
+    :return: True si la création est réussie, False sinon
+    """
+    db_pool = DatabasePool.get_instance()
+    conn = None
+
+    try:
+        conn = db_pool.get_connection()
+        cursor = conn.cursor()
+        
+        query = sql.SQL("""
+            INSERT INTO Utilisateur (login, mdp)
+            VALUES (%s, %s)
+            RETURNING id_utilisateur;
+        """)
+        
+        cursor.execute(query, (login, mdp))
+        id_utilisateur = cursor.fetchone()[0]
+        conn.commit()
+        
+        return True
+
+    except Exception as e:
+        print("Erreur lors de la création de l'utilisateur :", e)
+        conn.rollback()
+        return False
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            db_pool.release_connection(conn)
+            
+            
+def verify_user(login, mdp):
+    """
+    Vérifie si l'utilisateur existe et si le mot de passe correspond.
+    
+    :param login: Login de l'utilisateur
+    :param mdp: Mot de passe de l'utilisateur
+    :return: (bool, int) - (True et id_utilisateur si connexion réussie, False et None sinon)
+    """
+    db_pool = DatabasePool.get_instance()
+    conn = None
+
+    try:
+        conn = db_pool.get_connection()
+        cursor = conn.cursor()
+        
+        query = sql.SQL("""
+            SELECT id_utilisateur
+            FROM Utilisateur
+            WHERE login = %s AND mdp = %s;
+        """)
+        
+        cursor.execute(query, (login, mdp))
+        result = cursor.fetchone()
+        
+        if result:
+            return True, result[0]  # Retourne True et l'id_utilisateur
+        return False, None  # Retourne False et None si l'utilisateur n'existe pas
+
+    except Exception as e:
+        print("Erreur lors de la vérification de l'utilisateur :", e)
+        return False, None
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            db_pool.release_connection(conn)
