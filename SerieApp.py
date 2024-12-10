@@ -301,73 +301,7 @@ class SerieApp:
             command=self.create_main_menu
         ).pack()
 
-    # def search_serie(self):
-    #     # Effacer les anciens résultats
-    #     for widget in self.display_frame.winfo_children():
-    #         widget.destroy()
-
-    #     # ### Exemple de données codées en dur pour tester ###
-    #     #results = [
-    #     #    {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png"},
-    #     #    {"title": "Friends", "image_path": "img/friends.png"},
-    #     #    {"title": "Breaking Bad", "image_path": "img/breakingbad.png"}
-    #     #]
-
-    #     # ### Code réel pour récupérer les résultats dynamiquement ###
-    #     motscles = self.search_entry.get().strip().lower()
-    #     results_series = self.find_best_series(motscles) 
-
-    #     # Si aucun résultat trouvé
-    #     if not results_series:
-    #         tk.Label(
-    #             self.display_frame,
-    #             text="Aucun résultat trouvé.",
-    #             font=("Tahoma", 14),
-    #             fg="white",
-    #             bg="#141414"
-    #         ).pack()
-    #         return
-
-    #     # Hiérarchie des tailles pour le top 3
-    #     sizes = [(200, 300), (150, 225), (100, 150)]  # Taille des images (largeur, hauteur)
-    #     fonts = [("Tahoma", 14, "bold"), ("Tahoma", 12), ("Tahoma", 10)]  # Tailles des polices
-
-    #     # Afficher chaque résultat avec la hiérarchie visuelle
-    #     for i, result in enumerate(results_series):
-    #         # Créer un sous-frame pour chaque série
-    #         image_frame = tk.Frame(self.display_frame, bg="#141414")
-    #         image_frame.pack(side="left", padx=20)
-
-    #         # Charger et afficher l'image
-    #         image_label = tk.Label(image_frame, bg="#141414")
-    #         try:
-    #             if os.path.exists(result["image_path"]):
-    #                 img = Image.open(result["image_path"])
-    #                 img = img.resize(sizes[i])  # Ajuster la taille selon le classement
-    #                 photo = ImageTk.PhotoImage(img)
-    #                 image_label.config(image=photo)
-    #                 image_label.image = photo
-    #             else:
-    #                 image_label.config(text="Image introuvable", fg="red")
-    #         except Exception as e:
-    #             image_label.config(text="Erreur lors du chargement", fg="red")
-    #             print(f"Erreur : {e}")
-
-    #         image_label.pack()
-
-    #         # Afficher le titre sous l'image
-    #         title_label = tk.Label(
-    #             image_frame,
-    #             text=result["title"],
-    #             font=fonts[i],
-    #             fg="white",
-    #             bg="#141414",
-    #             anchor="center"
-    #         )
-    #         title_label.pack(pady=10)
     
-    
-    #################### A TESTER ###################################
     def search_serie(self):
         # Effacer les anciens résultats
         for widget in self.display_frame.winfo_children():
@@ -443,10 +377,10 @@ class SerieApp:
                 font=button_sizes[i],
                 fg="white",
                 bg="#e21219",
-                width=10,  # Largeur fixe pour tous les boutons
-                command=lambda serie=result: self.open_rating_window(serie)  # Utiliser la fonction existante
+                width=10,
+                command=lambda s={"title": serie_title}: self.open_rating_window(s)
             )
-            noter_button.pack(pady=5)  # Petit espacement au-dessus et en-dessous du bouton
+            noter_button.pack(pady=5) 
         ##############################################################################################################
 
 
@@ -528,88 +462,12 @@ class SerieApp:
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
             {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
         ]
-        
-    #     # Fonction pour filtrer les séries en fonction de la recherche
-    # def search_series():
-    #     search_term = search_entry.get().lower()  # Récupère le texte de la barre de recherche
-    #     filtered_series = [
-    #         serie for serie in self.series
-    #         if search_term in serie["title"].lower()
-    #     ]
-    #     # Met à jour l'affichage avec les séries filtrées
-    #     self.update_series_list(filtered_series)
-
-    #     # Bouton de recherche
-    #     search_button = tk.Button(
-    #         search_frame,
-    #         text="Rechercher",
-    #         font=("Tahoma", 12),
-    #         fg="white",
-    #         bg="#e21219",
-    #         command=search_series
-    #     )
-    #     search_button.pack(side="right", padx=10)
-
-    #     # Frame pour la liste des séries
-    #     series_frame = tk.Frame(self.root, bg="#141414")
-    #     series_frame.pack(pady=20, fill="x")
-
-    #     # Simule une liste de séries
-    #     self.series = [
-    #         {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
-    #         {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
-    #         {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-    #     ]
-
 
         def update_rating(serie, new_rating, star_label):
             """Met à jour la note et les étoiles affichées."""
             serie["rating"] = new_rating
             stars = "★" * new_rating + "☆" * (5 - new_rating)
             star_label.config(text=stars)
-
-        def open_rating_window(serie, star_label):
-            """Ouvre une fenêtre pour noter un serie."""
-            rating_window = tk.Toplevel(self.root)
-            rating_window.title(f"Noter {serie['title']}")
-            rating_window.configure(bg="#141414")
-            rating_window.geometry("300x200")
-
-            tk.Label(
-                rating_window,
-                text=f"Attribuer une note à {serie['title']}",
-                font=("Tahoma", 14),
-                fg="white",
-                bg="#141414"
-            ).pack(pady=10)
-
-            # Curseur pour attribuer une note
-            note_var = tk.IntVar(value=serie["rating"])
-            slider = tk.Scale(
-                rating_window,
-                from_=0,
-                to=5,
-                orient="horizontal",
-                bg="#141414",
-                fg="white",
-                highlightbackground="#141414",
-                variable=note_var
-            )
-            slider.pack(pady=20)
-
-            tk.Button(
-                rating_window,
-                text="Valider",
-                font=("Tahoma", 12),
-                fg="white",
-                bg="#e21219",
-                command=lambda: save_rating(serie, note_var.get(), star_label, rating_window)
-            ).pack(pady=10)
-
-        def save_rating(serie, new_rating, star_label, rating_window):
-            """Enregistre la note et ferme la fenêtre."""
-            update_rating(serie, new_rating, star_label)
-            rating_window.destroy()
 
         # Créer un frame conteneur pour le canvas et la scrollbar
         container_frame = tk.Frame(self.root, bg="#141414")
@@ -696,8 +554,76 @@ class SerieApp:
                 font=("Tahoma", 12),
                 fg="white",
                 bg="#e21219",
-                command=lambda f=serie, s=star_label: open_rating_window(f, s)
+                command=lambda s=serie, l=star_label: self.open_rating_window(s, l)
             ).pack(side="right", padx=10, pady=5)
+            
+            
+    def open_rating_window(self, serie, star_label=None):
+        """
+        Ouvre une fenêtre pour noter une série.
+        Args:
+            serie (dict): La série à noter
+            star_label (tk.Label, optional): Le label des étoiles à mettre à jour si présent
+        """
+        rating_window = tk.Toplevel(self.root)
+        rating_window.title(f"Noter {serie['title']}")
+        rating_window.configure(bg="#141414")
+        
+        # Dimensions de la fenêtre
+        width, height = 300, 200
+        
+        # Obtenir les dimensions de l'écran
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Calculer les coordonnées x et y pour centrer la fenêtre
+        x = (screen_width - width) // 2
+        y = (screen_height - height) // 2
+        
+        # Définir la géométrie de la fenêtre
+        rating_window.geometry(f"{width}x{height}+{x}+{y}")
+
+        tk.Label(
+            rating_window,
+            text=f"Attribuer une note à {serie['title']}",
+            font=("Tahoma", 14),
+            fg="white",
+            bg="#141414"
+        ).pack(pady=10)
+
+        # Curseur pour attribuer une note
+        initial_rating = serie.get("rating", 0)  # Utilise 0 si pas de rating existant
+        note_var = tk.IntVar(value=initial_rating)
+        slider = tk.Scale(
+            rating_window,
+            from_=0,
+            to=5,
+            orient="horizontal",
+            bg="#141414",
+            fg="white",
+            highlightbackground="#141414",
+            variable=note_var
+        )
+        slider.pack(pady=20)
+
+        def save_rating():
+            new_rating = note_var.get()
+            serie["rating"] = new_rating
+            
+            if star_label:
+                stars = "★" * new_rating + "☆" * (5 - new_rating)
+                star_label.config(text=stars)
+            
+            rating_window.destroy()
+
+        tk.Button(
+            rating_window,
+            text="Valider",
+            font=("Tahoma", 12),
+            fg="white",
+            bg="#e21219",
+            command=save_rating
+        ).pack(pady=10)
 
     def choose_serie(self):
         serie = self.selected_serie.get()
