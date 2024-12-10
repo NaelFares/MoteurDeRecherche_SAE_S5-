@@ -126,16 +126,8 @@ def find_recommendations_from_favorites(id_utilisateur, limit_series=5):
             
 def filter_series(user_input):
     """
-    Trouve la série en fonction de l'entrée dans la barre de recherche dans la fenetre "Noter"
-    
-    :return: Liste des séries les plus probables.
+    Trouve la série en fonction de l'entrée dans la barre de recherche
     """
-    # Vérifie l'entrée utilisateur
-    if not user_input.strip():
-        print("Erreur : L'entrée utilisateur est vide ou invalide.")
-        return []
-
-    # Obtient l'instance du pool
     db_pool = DatabasePool.get_instance()
     conn = None
 
@@ -143,26 +135,34 @@ def filter_series(user_input):
         conn = db_pool.get_connection()
         cursor = conn.cursor()
         
-        # Normalisation de l'entrée utilisateur : minuscules et suppression des espaces
-        normalized_input = f"%{user_input.lower().replace(' ', '')}%"
-        
-        query = sql.SQL("""
-            SELECT s.titre
-            FROM Serie s 
-            WHERE LOWER(REPLACE(s.titre, ' ', '')) ILIKE %s
-            LIMIT 3;
-        """)
-        
-        cursor.execute(query, (normalized_input,))
+        # Si l'entrée est vide, retourner toutes les séries
+        if not user_input.strip():
+            query = sql.SQL("""
+                SELECT s.titre, r.note
+                FROM Serie s
+                LEFT JOIN Regarde r ON r.id_serie = s.id_serie
+                ORDER BY titre;
+            """)
+            cursor.execute(query)
+        else:
+            # Sinon, filtrer selon l'entrée
+            normalized_input = f"%{user_input.strip().lower().replace(' ', '')}%"
+            query = sql.SQL("""
+                SELECT s.titre, r.note
+                FROM Serie s
+                LEFT JOIN Regarde r ON r.id_serie = s.id_serie
+                WHERE LOWER(titre) LIKE %s
+                ORDER BY titre
+                LIMIT 10;
+            """)
+            cursor.execute(query, (normalized_input,))
+            
         results = cursor.fetchall()
-        conn.commit()
-        
         return results
 
     except Exception as e:
         print("Erreur lors de l'exécution de la requête :", e)
         return []
-        
     finally:
         if cursor:
             cursor.close()

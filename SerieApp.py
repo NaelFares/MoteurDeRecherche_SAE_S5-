@@ -425,26 +425,25 @@ class SerieApp:
         search_label.pack(side="left", padx=10)
 
         # Champ de texte pour la recherche
-        search_entry = tk.Entry(
+        self.list_search_entry = tk.Entry(
             search_frame,
             font=("Tahoma", 12),
             fg="black",
             bg="white",
             width=40
         )
-        search_entry.pack(side="left", padx=10)
+        self.list_search_entry.pack(side="left", padx=10)
 
-        # Bouton de recherche
+        # Bouton de recherche avec la commande liée
         search_button = tk.Button(
-        search_frame,
-        text="Rechercher",
-        font=("Tahoma", 12),
-        fg="white",
-        bg="#e21219",
-        #command= mettre la fonctione liée
+            search_frame,
+            text="Rechercher",
+            font=("Tahoma", 12),
+            fg="white",
+            bg="#e21219",
+            command=self.filter_list_series
         )
-        search_button.pack(side="left", padx=10)  # Placement à gauche de la frame, juste après l'Entry
-
+        search_button.pack(side="left", padx=10)
 
         # Frame pour la liste des series
         series_frame = tk.Frame(self.root, bg="#141414")
@@ -711,6 +710,32 @@ class SerieApp:
             self.create_login_screen()
         else:
             messagebox.showerror("Erreur", "La création du compte a échoué. Veuillez réessayer.")
+
+    def filter_list_series(self):
+        """Filtre et met à jour la liste des séries affichées"""
+        search_text = self.list_search_entry.get()
+        filtered_results = requete.filter_series(search_text)
+        
+        # Mise à jour de la liste des séries avec gestion d'erreur
+        try:
+            self.series = []
+            for titre in filtered_results:
+                serie = {
+                    "title": titre[0],
+                    "image_path": f"img/{titre[0].replace(' ', '').lower()}.png",
+                    "rating": 0  # Note par défaut
+                }
+                self.series.append(serie)
+                
+            # Si aucun résultat
+            if not self.series:
+                print("Aucune série trouvée")
+                
+            # Rafraîchir l'affichage de la liste
+            self.create_list_screen()
+            
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de la liste : {e}")
 
 
 if __name__ == "__main__":
