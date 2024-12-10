@@ -445,42 +445,43 @@ class SerieApp:
         )
         search_button.pack(side="left", padx=10)
 
-        # Frame pour la liste des series
-        series_frame = tk.Frame(self.root, bg="#141414")
-        series_frame.pack(pady=20, fill="x")
+        # Initialisation de la liste des séries au démarrage
+        if not hasattr(self, 'series'):
+            filtered_results = requete.filter_series("")
+            self.series = []
+            for titre, note in filtered_results:
+                serie = {
+                    "title": titre,
+                    "image_path": f"img/{titre.replace(' ', '').lower()}.png",
+                    "rating": note if note is not None else 0
+                }
+                self.series.append(serie)
 
-        # Simule une liste de series
-        self.series = [
-            {"title": "The Big Bang Theory", "image_path": "img/thebigbangtheory.png", "rating": 4},
-            {"title": "Friends", "image_path": "img/friends.png", "rating": 5},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-            {"title": "Breaking Bad", "image_path": "img/breakingbad.png", "rating": 3},
-        ]
-
-        def update_rating(serie, new_rating, star_label):
-            """Met à jour la note et les étoiles affichées."""
-            serie["rating"] = new_rating
-            stars = "★" * new_rating + "☆" * (5 - new_rating)
-            star_label.config(text=stars)
-
-        # Créer un frame conteneur pour le canvas et la scrollbar
+        # Frame pour la liste des series avec scrollbar
         container_frame = tk.Frame(self.root, bg="#141414")
         container_frame.pack(pady=20, fill="both", expand=True)
 
-        # Créer le canvas avec scrollbar
+        # Si aucune série n'est trouvée, afficher un message
+        if not self.series:
+            tk.Label(
+                container_frame,
+                text="Aucune série trouvée",
+                font=("Tahoma", 14),
+                fg="white",
+                bg="#141414"
+            ).pack(pady=50)
+            return
+
+        # Canvas avec scrollbar
         canvas = tk.Canvas(container_frame, bg="#141414", highlightthickness=0)
         canvas.pack(side="left", fill="both", expand=True)
 
+        # Toujours créer la scrollbar
         scrollbar = tk.Scrollbar(container_frame, orient="vertical", command=canvas.yview)
         scrollbar.pack(side="right", fill="y")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Ajouter ces lignes pour le défilement avec la molette/pavé tactile
+        # Configuration du défilement avec la molette
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
@@ -499,17 +500,17 @@ class SerieApp:
             canvas.configure(scrollregion=canvas.bbox("all"))
         series_frame.bind('<Configure>', update_scroll_region)
 
-        # Le reste du code pour afficher les séries, mais dans series_frame au lieu de directement dans root
+        # Affichage des séries
         for serie in self.series:
             serie_frame = tk.Frame(series_frame, bg="#141414", bd=1, relief="solid")
             serie_frame.pack(fill="x", pady=5, padx=5)
             
-            # Charger et afficher l'image
+            # Image
             img_label = tk.Label(serie_frame, bg="#141414")
             try:
                 if os.path.exists(serie["image_path"]):
                     img = Image.open(serie["image_path"])
-                    img = img.resize((50, 75))  # Taille réduite
+                    img = img.resize((50, 75))
                     photo = ImageTk.PhotoImage(img)
                     img_label.config(image=photo)
                     img_label.image = photo
@@ -520,11 +521,11 @@ class SerieApp:
                 print(f"Erreur : {e}")
             img_label.pack(side="left", padx=10, pady=5)
 
-            # Titre, étoiles et bouton noter
+            # Détails (titre et étoiles)
             details_frame = tk.Frame(serie_frame, bg="#141414")
             details_frame.pack(side="left", padx=10, pady=5, fill="x")
 
-            # Titre du serie
+            # Titre
             tk.Label(
                 details_frame,
                 text=serie["title"],
@@ -546,7 +547,7 @@ class SerieApp:
             )
             star_label.pack(anchor="w", pady=5)
 
-            # Bouton pour noter
+            # Bouton Noter
             tk.Button(
                 serie_frame,
                 text="Noter",
@@ -719,11 +720,11 @@ class SerieApp:
         # Mise à jour de la liste des séries avec gestion d'erreur
         try:
             self.series = []
-            for titre in filtered_results:
+            for titre, note in filtered_results:
                 serie = {
-                    "title": titre[0],
-                    "image_path": f"img/{titre[0].replace(' ', '').lower()}.png",
-                    "rating": 0  # Note par défaut
+                    "title": titre,
+                    "image_path": f"img/{titre.replace(' ', '').lower()}.png",
+                    "rating": note if note is not None else 0  # Utilise 0 si pas de note
                 }
                 self.series.append(serie)
                 

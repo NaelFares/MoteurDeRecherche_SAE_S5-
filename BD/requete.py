@@ -145,8 +145,8 @@ def filter_series(user_input):
             """)
             cursor.execute(query)
         else:
-            # Sinon, filtrer selon l'entrée
-            normalized_input = f"%{user_input.strip().lower().replace(' ', '')}%"
+            # Simplement ajouter les % autour de l'entrée utilisateur
+            search_term = f"%{user_input.strip().lower()}%"
             query = sql.SQL("""
                 SELECT s.titre, r.note
                 FROM Serie s
@@ -155,7 +155,7 @@ def filter_series(user_input):
                 ORDER BY titre
                 LIMIT 10;
             """)
-            cursor.execute(query, (normalized_input,))
+            cursor.execute(query, (search_term,))
             
         results = cursor.fetchall()
         return results
