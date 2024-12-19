@@ -7,7 +7,7 @@ def find_best_series(user_input):
     Trouve les 3 séries les plus pertinentes en fonction des mots-clés saisis par l'utilisateur.
     
     :param user_input: Chaîne de mots-clés (par exemple : "avion crash mystère").
-    :return: Liste des 3 séries les plus probables (titre, total_score).
+    :return: Liste des 3 séries les plus probables (id_serie, titre, total_score).
     """
     # Vérifie l'entrée utilisateur
     if not user_input.strip():
@@ -27,11 +27,11 @@ def find_best_series(user_input):
             WITH mots_recherches AS (
                 SELECT UNNEST(%s) AS word
             )
-            SELECT s.titre, SUM(m.score_tf_idf) AS total_score
+            SELECT s.id_serie, s.titre, SUM(m.score_tf_idf) AS total_score
             FROM Mot m
             JOIN mots_recherches mr ON m.mot = mr.word
             JOIN Serie s ON s.id_serie = m.id_serie
-            GROUP BY s.titre
+            GROUP BY s.id_serie, s.titre
             ORDER BY total_score DESC
             LIMIT 3;
         """)
@@ -137,8 +137,8 @@ def filter_series(user_input):
         
         # Si l'entrée est vide, retourner toutes les séries
         if not user_input.strip():
-            query = sql.SQL("""
-                SELECT s.titre, r.note
+            query = sql.SQL(""" 
+                SELECT s.id_serie, s.titre, r.note
                 FROM Serie s
                 LEFT JOIN Regarde r ON r.id_serie = s.id_serie
                 ORDER BY titre;
@@ -147,8 +147,8 @@ def filter_series(user_input):
         else:
             # Simplement ajouter les % autour de l'entrée utilisateur
             search_term = f"%{user_input.strip().lower()}%"
-            query = sql.SQL("""
-                SELECT s.titre, r.note
+            query = sql.SQL(""" 
+                SELECT s.id_serie, s.titre, r.note
                 FROM Serie s
                 LEFT JOIN Regarde r ON r.id_serie = s.id_serie
                 WHERE LOWER(titre) LIKE %s
@@ -241,6 +241,47 @@ def verify_user(login, mdp):
     except Exception as e:
         print("Erreur lors de la vérification de l'utilisateur :", e)
         return False, None
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            db_pool.release_connection(conn)
+            
+            
+                      
+def rate_series(id_utilisateur, id_serie, note):
+    """
+    Permet à un utilisateur de noter une série.
+    
+    :param id_utilisateur: ID de l'utilisateur
+    :param id_serie: ID de la série à noter
+    :param note: Note à attribuer à la série (entier)
+    :return: True si la notation est réussie, False sinon
+    """
+    db_pool = DatabasePool.get_instance()
+    conn = None
+
+    try:
+        conn = db_pool.get_connection()
+        cursor = conn.cursor()
+        
+        query = sql.SQL(""" 
+            INSERT INTO Regarde (id_serie, id_utilisateur, note)
+            VALUES (%s, %s, %s)
+            ON CONFLICT (id_serie, id_utilisateur) 
+            DO UPDATE SET note = EXCLUDED.note;  -- Met à jour la note si elle existe déjà
+        """)
+        
+        cursor.execute(query, (id_serie, id_utilisateur, note))
+        conn.commit()
+        
+        return True
+
+    except Exception as e:
+        print("Erreur lors de la notation de la série :", e)
+        conn.rollback()
+        return False
         
     finally:
         if cursor:

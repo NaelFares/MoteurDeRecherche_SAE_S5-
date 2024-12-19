@@ -177,7 +177,7 @@ class SerieApp:
 
         # Obtenir les recommandations depuis la base de données
         recommended_series = requete.find_recommendations_from_favorites(self.current_user_id)
-
+        
         if not recommended_series:
             # Afficher un message si aucune recommandation n'est disponible
             tk.Label(
@@ -313,8 +313,19 @@ class SerieApp:
         # Utiliser la fonction find_best_series importée de requete.py
         results_db = requete.find_best_series(motscles)
         
-        # Transformer les résultats de la BD en ne gardant que les titres
-        results_series = [{"title": titre} for titre, _ in results_db]
+        # Vérifier la structure des résultats
+        if not results_db:
+            tk.Label(
+                self.display_frame,
+                text="Aucun résultat trouvé.",
+                font=("Tahoma", 14),
+                fg="white",
+                bg="#141414"
+            ).pack()
+            return
+
+        # Transformer les résultats de la BD en ne gardant que les id et les titres
+        results_series = [{"id": row[0], "title": row[1]} for row in results_db]
 
         # Si aucun résultat trouvé
         if not results_series:
@@ -378,11 +389,9 @@ class SerieApp:
                 fg="white",
                 bg="#e21219",
                 width=10,
-                command=lambda s={"title": serie_title}: self.open_rating_window(s)
+                command=lambda s=result: self.open_rating_window(s)
             )
-            noter_button.pack(pady=5) 
-        ##############################################################################################################
-
+            noter_button.pack(pady=5)
 
     def create_list_screen(self):
         self.clear_screen()
@@ -417,7 +426,7 @@ class SerieApp:
         
         search_label = tk.Label(
             search_frame,
-            text="Rechercher une série :",
+            text="Rechercher une série par son titre :",
             font=("Tahoma", 12),
             fg="white",
             bg="#141414"
@@ -449,8 +458,9 @@ class SerieApp:
         if not hasattr(self, 'series'):
             filtered_results = requete.filter_series("")
             self.series = []
-            for titre, note in filtered_results:
+            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
                 serie = {
+                    "id": id_serie,  # Utilisez l'ID de la série
                     "title": titre,
                     "image_path": f"img/{titre.replace(' ', '').lower()}.png",
                     "rating": note if note is not None else 0
@@ -613,6 +623,13 @@ class SerieApp:
             if star_label:
                 stars = "★" * new_rating + "☆" * (5 - new_rating)
                 star_label.config(text=stars)
+
+            # Appel de la fonction pour noter la série
+            success = requete.rate_series(self.current_user_id, serie['id'], new_rating)
+            if success:
+                messagebox.showinfo("Succès", "Note enregistrée avec succès!")
+            else:
+                messagebox.showerror("Erreur", "Échec de l'enregistrement de la note.")
             
             rating_window.destroy()
 
@@ -720,8 +737,9 @@ class SerieApp:
         # Mise à jour de la liste des séries avec gestion d'erreur
         try:
             self.series = []
-            for titre, note in filtered_results:
+            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
                 serie = {
+                    "id": id_serie,  # Utilisez l'ID de la série
                     "title": titre,
                     "image_path": f"img/{titre.replace(' ', '').lower()}.png",
                     "rating": note if note is not None else 0  # Utilise 0 si pas de note
