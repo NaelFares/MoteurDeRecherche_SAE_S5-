@@ -45,6 +45,12 @@ class SerieApp:
 
         # === INITIALISATION ===
         self.create_login_screen()
+        
+        # Index pour afficher les séries 10 par 10
+        self.current_index = 0
+        self.series = []
+        self.total_series_count = 0
+        self.search_performed = False  # État pour savoir si une recherche a été effectuée
 
     def create_login_screen(self):
         self.clear_screen()
@@ -135,6 +141,7 @@ class SerieApp:
     #         print("Login ou mot de passe incorrect")
 
     def create_main_menu(self):
+        self.search_performed = False  # Réinitialiser l'état de recherche
         self.clear_screen()
 
         # Dimensions de la fenêtre
@@ -454,26 +461,26 @@ class SerieApp:
             font=("Tahoma", 12),
             fg="white",
             bg="#e21219",
-            command=self.filter_list_series
+            command=self.filter_list_series  # Appel à filter_list_series
         )
         search_button.pack(side="left", padx=10)
 
-        # Initialisation de la liste des séries au démarrage
-        if not hasattr(self, 'series'):
-            filtered_results = requete.filter_series("")
+        # Frame pour la liste des séries avec scrollbar
+        container_frame = tk.Frame(self.root, bg="#141414")
+        container_frame.pack(pady=20, fill="both", expand=True)
+
+        # Si aucune recherche n'a été effectuée, récupérer toutes les séries
+        if not self.search_performed:
+            filtered_results = requete.filter_series("")  # Récupérer toutes les séries
             self.series = []
-            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
+            for id_serie, titre, note in filtered_results:
                 serie = {
-                    "id": id_serie,  # Utilisez l'ID de la série
+                    "id": id_serie,
                     "title": titre,
                     "image_path": f"img/{titre.replace(' ', '').lower()}.png",
                     "rating": note if note is not None else 0
                 }
                 self.series.append(serie)
-
-        # Frame pour la liste des series avec scrollbar
-        container_frame = tk.Frame(self.root, bg="#141414")
-        container_frame.pack(pady=20, fill="both", expand=True)
 
         # Si aucune série n'est trouvée, afficher un message
         if not self.series:
@@ -513,12 +520,32 @@ class SerieApp:
         def update_scroll_region(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
         series_frame.bind('<Configure>', update_scroll_region)
+        
+        # Appeler la méthode pour afficher les séries
+        self.current_index = 0  # Réinitialiser l'index
+        self.total_series_count = len(self.series)  # Mettre à jour le nombre total de séries
+        self.display_series(series_frame)  # Afficher les séries initiales
 
-        # Affichage des séries
-        for serie in self.series:
+        # Bouton pour charger plus de séries
+        load_more_button = tk.Button(
+            self.root,
+            text="Charger plus de séries",
+            font=("Tahoma", 14),
+            fg="white",
+            bg="#e21219",
+            command=lambda: self.load_more_series(series_frame)  # Utiliser lambda pour passer le conteneur
+        )
+        load_more_button.pack(pady=20)
+
+    def display_series(self, series_frame):
+        """Affiche les séries à partir de l'index actuel dans le conteneur spécifié."""
+        # Ne pas effacer les anciens résultats, juste ajouter les nouvelles séries
+        # Affichage des séries par groupes de 10
+        for i in range(self.current_index, min(self.current_index + 10, self.total_series_count)):
+            serie = self.series[i]  # Utiliser l'index pour accéder à la série
             serie_frame = tk.Frame(series_frame, bg="#141414", bd=1, relief="solid")
             serie_frame.pack(fill="x", pady=5, padx=5)
-            
+
             # Image
             img_label = tk.Label(serie_frame, bg="#141414")
             try:
@@ -570,7 +597,45 @@ class SerieApp:
                 bg="#e21219",
                 command=lambda s=serie, l=star_label: self.open_rating_window(s, l)
             ).pack(side="right", padx=10, pady=5)
+
+    def load_more_series(self, series_frame):
+        """Charge 10 séries supplémentaires."""
+        if self.current_index < self.total_series_count:  # Vérifiez si plus de séries sont disponibles
+            # Calculez combien de séries peuvent encore être chargées
+            remaining_series = self.total_series_count - self.current_index
+            # Chargez soit 10, soit le nombre de séries restantes
+            load_count = min(10, remaining_series)
+            self.current_index += load_count
+            self.display_series(series_frame)  # Afficher les nouvelles séries
+        else:
+            messagebox.showinfo("Info", "Aucune série supplémentaire à charger.")  # Message si toutes les séries sont déjà affichées
             
+    def filter_list_series(self):
+        """Filtre et met à jour la liste des séries affichées"""
+        search_text = self.list_search_entry.get().strip()
+        filtered_results = requete.filter_series(search_text)
+        
+        # Mise à jour de la liste des séries avec gestion d'erreur
+        try:
+            self.series = []
+            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
+                serie = {
+                    "id": id_serie,  # Utilisez l'ID de la série
+                    "title": titre,
+                    "image_path": f"img/{titre.replace(' ', '').lower()}.png",
+                    "rating": note if note is not None else 0  # Utilise 0 si pas de note
+                }
+                self.series.append(serie)
+                
+            # Indiquer qu'une recherche a été effectuée
+            self.search_performed = True
+                
+            # Rafraîchir l'affichage de la liste
+            self.create_list_screen()
+            
+        except Exception as e:
+            print(f"Erreur lors de la mise à jour de la liste : {e}")
+        
             
     def open_rating_window(self, serie, star_label=None):
         """
@@ -732,33 +797,6 @@ class SerieApp:
             self.create_login_screen()
         else:
             messagebox.showerror("Erreur", "La création du compte a échoué. Veuillez réessayer.")
-
-    def filter_list_series(self):
-        """Filtre et met à jour la liste des séries affichées"""
-        search_text = self.list_search_entry.get()
-        filtered_results = requete.filter_series(search_text)
-        
-        # Mise à jour de la liste des séries avec gestion d'erreur
-        try:
-            self.series = []
-            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
-                serie = {
-                    "id": id_serie,  # Utilisez l'ID de la série
-                    "title": titre,
-                    "image_path": f"img/{titre.replace(' ', '').lower()}.png",
-                    "rating": note if note is not None else 0  # Utilise 0 si pas de note
-                }
-                self.series.append(serie)
-                
-            # Si aucun résultat
-            if not self.series:
-                print("Aucune série trouvée")
-                
-            # Rafraîchir l'affichage de la liste
-            self.create_list_screen()
-            
-        except Exception as e:
-            print(f"Erreur lors de la mise à jour de la liste : {e}")
 
 
 if __name__ == "__main__":
