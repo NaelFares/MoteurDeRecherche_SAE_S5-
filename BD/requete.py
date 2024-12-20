@@ -53,7 +53,7 @@ def find_best_series(user_input):
             db_pool.release_connection(conn)
 
 
-def find_recommendations_from_favorites(id_utilisateur, limit_series=5):
+def find_recommendations_from_favorites(id_utilisateur, limit_series=6):
     """
     Trouve des séries recommandées basées sur les mots-clés des séries préférées de l'utilisateur.
     

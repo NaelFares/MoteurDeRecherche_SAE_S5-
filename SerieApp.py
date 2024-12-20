@@ -159,7 +159,7 @@ class SerieApp:
         button_frame.pack(pady=10)
 
         # Boutons de navigation
-        tk.Button(button_frame, text="Noter", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(side="left", padx=10)
+        tk.Button(button_frame, text="Toutes les séries", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_list_screen).pack(side="left", padx=10)
         tk.Button(button_frame, text="Rechercher", font=("Tahoma", 14), fg="white", bg="#141414", command=self.create_search_screen).pack(side="left", padx=10)
         tk.Button(button_frame, text="Déconnexion", font=("Tahoma", 14), fg="white", bg="#e21219", command=self.logout).pack(side="left", padx=10)
 
@@ -202,9 +202,13 @@ class SerieApp:
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
 
+        # Met à jour les dimensions du conteneur pour que les séries s'affichent
+        canvas.update_idletasks()
+        canvas.configure(scrollregion=canvas.bbox("all"))
         # Frame pour contenir les séries recommandées
         series_container = tk.Frame(canvas, bg="#141414")
         canvas.create_window((0, 0), window=series_container, anchor="nw", width=canvas.winfo_width())
+  
 
         # Configuration des colonnes
         for i in range(3):
