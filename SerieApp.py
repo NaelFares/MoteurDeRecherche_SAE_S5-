@@ -127,18 +127,6 @@ class SerieApp:
         """Réinitialise l'application et ramène l'utilisateur à la page de connexion."""
         self.create_login_screen()
 
-            
-    # def check_login(self):
-    #     # Récupérer les valeurs des champs
-    #     login = self.login_entry.get()
-    #     password = self.password_entry.get()
-
-    #     # Exemple de logique de vérification (à adapter à vos besoins)
-    #     if login == "admin" and password == "password123":
-    #         print("Connexion réussie !")
-    #         # Vous pouvez appeler une méthode pour changer d'écran ou afficher un message
-    #     else:
-    #         print("Login ou mot de passe incorrect")
 
     def create_main_menu(self):
         self.search_performed = False  # Réinitialiser l'état de recherche
@@ -372,8 +360,8 @@ class SerieApp:
             title_label.pack(pady=10)
 
             # Récupérer le titre du label pour construire le chemin de l'image
-            serie_title = title_label.cget("text")  # Récupère le texte du label
-            image_path = f"img/{serie_title.replace(' ', '').lower()}.png"  # Exemple : "Friends" -> "img/friends.png"
+            serie_title = title_label.cget("text")  # Récupérer le texte du label
+            image_path = f"img/{serie_title.replace(' ', '').lower()}.png"  
 
             # Charger et afficher l'image
             image_label = tk.Label(image_frame, bg="#141414")
@@ -600,10 +588,10 @@ class SerieApp:
 
     def load_more_series(self, series_frame):
         """Charge 10 séries supplémentaires."""
-        if self.current_index < self.total_series_count:  # Vérifiez si plus de séries sont disponibles
-            # Calculez combien de séries peuvent encore être chargées
+        if self.current_index < self.total_series_count:  # Vérifier si plus de séries sont disponibles
+            # Calculer combien de séries peuvent encore être chargées
             remaining_series = self.total_series_count - self.current_index
-            # Chargez soit 10, soit le nombre de séries restantes
+            # Charger soit 10, soit le nombre de séries restantes
             load_count = min(10, remaining_series)
             self.current_index += load_count
             self.display_series(series_frame)  # Afficher les nouvelles séries
@@ -618,9 +606,9 @@ class SerieApp:
         # Mise à jour de la liste des séries avec gestion d'erreur
         try:
             self.series = []
-            for id_serie, titre, note in filtered_results:  # Mettez à jour pour décomposer les résultats
+            for id_serie, titre, note in filtered_results:  # Mettre à jour pour décomposer les résultats
                 serie = {
-                    "id": id_serie,  # Utilisez l'ID de la série
+                    "id": id_serie,  # Utiliser l'ID de la série
                     "title": titre,
                     "image_path": f"img/{titre.replace(' ', '').lower()}.png",
                     "rating": note if note is not None else 0  # Utilise 0 si pas de note
