@@ -52,6 +52,13 @@ class SerieApp:
         self.total_series_count = 0
         self.search_performed = False  # État pour savoir si une recherche a été effectuée
 
+    def _on_mousewheel(self, event, canvas):
+        """Gère les événements de scroll pour X11"""
+        if event.num == 4:  # Scroll up
+            canvas.yview_scroll(-1, "units")
+        elif event.num == 5:  # Scroll down
+            canvas.yview_scroll(1, "units")
+
     def create_login_screen(self):
         self.clear_screen()
         
@@ -70,9 +77,6 @@ class SerieApp:
         # Créer un Canvas pour dessiner un rectangle en fond
         canvas = tk.Canvas(self.root, width=400, height=400, bg="#141414", bd=0, highlightthickness=0)
         canvas.pack(expand=True)
-
-        # Dessiner un rectangle dans le Canvas
-        canvas.create_rectangle(60, 50, 350, 250, outline="#f4f4f4", width=2)
 
         # Créer un conteneur (Frame) pour le formulaire à l'intérieur du rectangle
         form_frame = tk.Frame(self.root, bg="#141414")
@@ -177,7 +181,7 @@ class SerieApp:
             # Afficher un message si aucune recommandation n'est disponible
             tk.Label(
                 recommendations_frame,
-                text="Notez des séries pour obtenir des recommandations personnalisées !",
+                text="Notez des séries que vous aimez (4 ou 5 étoiles)\n pour obtenir des recommandations personnalisées !",
                 font=("Tahoma", 12),
                 fg="white",
                 bg="#141414"
@@ -192,10 +196,11 @@ class SerieApp:
         scrollbar.pack(side="right", fill="y")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Configuration du défilement avec la molette
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        # Configuration du défilement avec la molette (Version X11 Linux)
+        canvas.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+        canvas.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
+        self.root.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+        self.root.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
 
         # Met à jour les dimensions du conteneur pour que les séries s'affichent
         canvas.update_idletasks()
@@ -438,7 +443,7 @@ class SerieApp:
             font=("Tahoma", 12),
             fg="black",
             bg="white",
-            width=40
+            width=33
         )
         self.list_search_entry.pack(side="left", padx=10)
 
@@ -459,7 +464,7 @@ class SerieApp:
 
         # Si aucune recherche n'a été effectuée, récupérer toutes les séries
         if not self.search_performed:
-            filtered_results = requete.filter_series("")  # Récupérer toutes les séries
+            filtered_results = requete.filter_series("", self.current_user_id)  # Récupérer toutes les séries
             self.series = []
             for id_serie, titre, note in filtered_results:
                 serie = {
@@ -490,10 +495,11 @@ class SerieApp:
         scrollbar.pack(side="right", fill="y")
         canvas.configure(yscrollcommand=scrollbar.set)
 
-        # Configuration du défilement avec la molette
-        def _on_mousewheel(event):
-            canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+        # Configuration du défilement avec la molette (Version X11 Linux)
+        canvas.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+        canvas.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
+        self.root.bind("<Button-4>", lambda e: self._on_mousewheel(e, canvas))
+        self.root.bind("<Button-5>", lambda e: self._on_mousewheel(e, canvas))
 
         # Frame pour contenir toutes les séries
         series_frame = tk.Frame(canvas, bg="#141414")
@@ -601,7 +607,7 @@ class SerieApp:
     def filter_list_series(self):
         """Filtre et met à jour la liste des séries affichées"""
         search_text = self.list_search_entry.get().strip()
-        filtered_results = requete.filter_series(search_text)
+        filtered_results = requete.filter_series(search_text, self.current_user_id)
         
         # Mise à jour de la liste des séries avec gestion d'erreur
         try:
@@ -671,22 +677,39 @@ class SerieApp:
             highlightbackground="#141414",
             variable=note_var
         )
-        slider.pack(pady=20)
+        slider.pack(pady=15)
+
+        # Ajouter un label explicatif
+        tk.Label(
+            rating_window,
+            text="(0 = Supprimer la note)",
+            font=("Tahoma", 10),
+            fg="white",
+            bg="#141414"
+        ).pack(pady=5)
 
         def save_rating():
             new_rating = note_var.get()
-            serie["rating"] = new_rating
             
-            if star_label:
-                stars = "★" * new_rating + "☆" * (5 - new_rating)
-                star_label.config(text=stars)
-
-            # Appel de la fonction pour noter la série
-            success = requete.rate_series(self.current_user_id, serie['id'], new_rating)
-            if success:
-                messagebox.showinfo("Succès", "Note enregistrée avec succès!")
+            if new_rating == 0:
+                # Supprimer la note
+                success = requete.delete_rating(self.current_user_id, serie['id'])
+                message = "Note supprimée avec succès!" if success else "Échec de la suppression de la note."
             else:
-                messagebox.showerror("Erreur", "Échec de l'enregistrement de la note.")
+                # Sauvegarder la nouvelle note
+                success = requete.rate_series(self.current_user_id, serie['id'], new_rating)
+                message = "Note enregistrée avec succès!" if success else "Échec de l'enregistrement de la note."
+
+            if success:
+                if star_label:
+                    if new_rating == 0:
+                        stars = "☆" * 5  # Afficher toutes les étoiles vides
+                    else:
+                        stars = "★" * new_rating + "☆" * (5 - new_rating)
+                    star_label.config(text=stars)
+                messagebox.showinfo("Succès", message)
+            else:
+                messagebox.showerror("Erreur", message)
             
             rating_window.destroy()
 
@@ -729,9 +752,6 @@ class SerieApp:
         # Créer un Canvas pour dessiner un rectangle en fond
         canvas = tk.Canvas(self.root, width=400, height=400, bg="#141414", bd=0, highlightthickness=0)
         canvas.pack(expand=True)
-
-        # Dessiner un rectangle dans le Canvas
-        canvas.create_rectangle(60, 50, 350, 250, outline="#f4f4f4", width=2)
 
         # Créer un conteneur (Frame) pour le formulaire
         form_frame = tk.Frame(self.root, bg="#141414")

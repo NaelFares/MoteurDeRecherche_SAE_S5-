@@ -6,7 +6,7 @@ def find_best_series(user_input):
     """
     Trouve les 3 séries les plus pertinentes en fonction des mots-clés saisis par l'utilisateur.
     
-    :param user_input: Chaîne de mots-clés (par exemple : "avion crash mystère").
+    :param user_input: Chaîne de mots-clés (par exemple : "crash avion île").
     :return: Liste des 3 séries les plus probables (id_serie, titre, total_score).
     """
     # Vérifie l'entrée utilisateur
@@ -76,15 +76,17 @@ def find_recommendations_from_favorites(id_utilisateur, limit_series=6):
                 WHERE id_utilisateur = %s
                 AND note >= 4
                 ORDER BY note DESC
-                LIMIT 5
             ),
-            mots_importants AS (
-                SELECT DISTINCT ON (sf.id_serie) m.mot, m.score_tf_idf
+            mots_avec_rang AS (
+                SELECT m.mot,
+                       ROW_NUMBER() OVER (PARTITION BY sf.id_serie ORDER BY m.score_tf_idf DESC) as rang
                 FROM series_favorites sf
                 JOIN Mot m ON m.id_serie = sf.id_serie
                 ORDER BY sf.id_serie, m.score_tf_idf DESC
             )
-            SELECT mot FROM mots_importants;
+            SELECT mot
+            FROM mots_avec_rang
+            WHERE rang <= 2;
         """)
         
         cursor.execute(query_mots, (id_utilisateur,))
@@ -124,9 +126,13 @@ def find_recommendations_from_favorites(id_utilisateur, limit_series=6):
         if conn:
             db_pool.release_connection(conn)
             
-def filter_series(user_input):
+def filter_series(user_input, id_utilisateur):
     """
     Trouve la série en fonction de l'entrée dans la barre de recherche
+    et récupère uniquement les notes de l'utilisateur connecté
+    
+    :param user_input: Texte de recherche
+    :param id_utilisateur: ID de l'utilisateur connecté
     """
     db_pool = DatabasePool.get_instance()
     conn = None
@@ -140,22 +146,24 @@ def filter_series(user_input):
             query = sql.SQL(""" 
                 SELECT s.id_serie, s.titre, r.note
                 FROM Serie s
-                LEFT JOIN Regarde r ON r.id_serie = s.id_serie
+                LEFT JOIN Regarde r ON r.id_serie = s.id_serie 
+                    AND r.id_utilisateur = %s  -- Filtrer pour l'utilisateur connecté
                 ORDER BY titre;
             """)
-            cursor.execute(query)
+            cursor.execute(query, (id_utilisateur,))
         else:
             # Simplement ajouter les % autour de l'entrée utilisateur
             search_term = f"%{user_input.strip().lower()}%"
             query = sql.SQL(""" 
                 SELECT s.id_serie, s.titre, r.note
                 FROM Serie s
-                LEFT JOIN Regarde r ON r.id_serie = s.id_serie
+                LEFT JOIN Regarde r ON r.id_serie = s.id_serie 
+                    AND r.id_utilisateur = %s  -- Filtrer pour l'utilisateur connecté
                 WHERE LOWER(titre) LIKE %s
                 ORDER BY titre
                 LIMIT 10;
             """)
-            cursor.execute(query, (search_term,))
+            cursor.execute(query, (id_utilisateur, search_term,))
             
         results = cursor.fetchall()
         return results
@@ -248,7 +256,6 @@ def verify_user(login, mdp):
         if conn:
             db_pool.release_connection(conn)
             
-            
                       
 def rate_series(id_utilisateur, id_serie, note):
     """
@@ -281,6 +288,43 @@ def rate_series(id_utilisateur, id_serie, note):
     except Exception as e:
         print("Erreur lors de la notation de la série :", e)
         conn.rollback()
+        return False
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            db_pool.release_connection(conn)
+
+def delete_rating(id_utilisateur, id_serie):
+    """
+    Supprime la note d'une série pour un utilisateur donné.
+    
+    :param id_utilisateur: ID de l'utilisateur
+    :param id_serie: ID de la série
+    :return: True si la suppression a réussi, False sinon
+    """
+    db_pool = DatabasePool.get_instance()
+    conn = None
+    try:
+        conn = db_pool.get_connection()
+        cursor = conn.cursor()
+        
+        query = sql.SQL("""
+            DELETE FROM Regarde 
+            WHERE id_utilisateur = %s 
+            AND id_serie = %s
+        """)
+        
+        cursor.execute(query, (id_utilisateur, id_serie))
+        conn.commit()
+        
+        return True
+        
+    except Exception as e:
+        print("Erreur lors de la suppression de la note :", e)
+        if conn:
+            conn.rollback()
         return False
         
     finally:
